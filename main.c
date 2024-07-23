@@ -30,34 +30,43 @@ wait_for_cr_lf(int fd, char *buff) {
 		}
 	} while(buff[numrecv - 2] == '\r' && buff[numrecv - 1] == '\n');
 
+	buff[numrecv - 2] = '\0';
+
 	return;
 }
 
 static void
 send_file(int fd, char *path) {
 
-	int inputfd = -1;
+	FILE *inputfd = NULL;
 	size_t bytes_read = 0;
+	
+	char edited_path[MAX_PATH_SIZE+sizeof(INDEX_FILE)];
 
-	printf("path is %s\n", path);
-	if ((inputfd = fileno(fopen(path, "r"))) < 0) {
-		sprintf(path, "%s/index.gph", path);
-		printf("path is %s\n", path);
-		if((inputfd = fileno(fopen(path, "r"))) < 0) {
+	printf("trying 1st time to open %s", path);
+	if ((inputfd = fopen(path, "r")) == NULL) {
+
+		sprintf(edited_path, "%s%s", path, INDEX_FILE);
+		printf("path is %s\n", edited_path);
+		
+		if((inputfd = fopen(edited_path, "r")) == NULL) {
+
 			printf("Nothing worked using path /index.gph\n");
-			if((inputfd = fileno(fopen("/index.gph", "r"))) < 0) {
+
+			if((inputfd = fopen(INDEX_FILE, "r")) == NULL) { // Make index.gph somehow a const
+				perror("3st attempt");
 				die("Couldn't open requested path nor /index.gph.\n");
 			}
 		}
 	}
 
-	printf("path is %s and the input fd is %d\n", path, inputfd);
+	printf("path is %s and the input FILE * is %p\n", path, inputfd);
 
-	while ((bytes_read = read(inputfd, path, MAX_PATH_SIZE)) > 0) {
+	while ((bytes_read = read(fileno(inputfd), path, MAX_PATH_SIZE)) > 0) {
         	write(fd, path, bytes_read);
     	}
 
-	close(inputfd);
+	close(fileno(inputfd));
 	return;
 }
 
@@ -70,7 +79,8 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int sockfd, connfd, len; 
+	int sockfd, connfd; 
+	unsigned int len; 
 	struct sockaddr_in serv_addr, client_addr; 
 	const char *err;
 	char request[MAX_PATH_SIZE];
@@ -92,6 +102,7 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			die("sgph %s © 2024-2029 sgph engeneers, see LICENSE for details.\n", VERSION);
+			break;
 		default:
 			usage();
 	} ARGEND;
@@ -101,7 +112,7 @@ main(int argc, char *argv[])
 
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	memset(&client_addr, 0, sizeof(client_addr));
-	memset(&request, 0, MAX_PATH_SIZE);
+// memset(request, 0, MAX_PATH_SIZE);
 
 	serv_addr.sin_family = AF_INET;
     	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); 
@@ -129,7 +140,7 @@ main(int argc, char *argv[])
 	/*
 	 * Client: Connects
 	 * Server: Accepsts
-	 * Client: <cr><lf> terminated string either nothing that means send /index.gph or "/path/to/smthin" that means hey send "/path/to/smthin" 
+	 * Client: <cr><rf><nul> terminated string either nothing that means send /index.gph or "/path/to/smthin" that means hey send "/path/to/smthin" 
 	 * Server: Sends the file
 	 * Server: closes the connection
 	 *
@@ -137,7 +148,10 @@ main(int argc, char *argv[])
 
 	wait_for_cr_lf(connfd, request);
 
-	printf("recieved request for file: %s\n", request);
+	/*for(int i = 0; request[i] != '\0'; i++) {
+		printf("0x%x", request[i]);
+		fflush(stdout);
+	}*/
 
 	send_file(connfd, request);
 		
