@@ -25,11 +25,9 @@ wait_for_cr_lf(int fd, char *buff) {
 	int numrecv = 0;
 	do {
 		memset(buff, 0, MAX_PATH_SIZE);
-//		printf("cykl2\n");
 		if((numrecv = recv(fd, buff, MAX_PATH_SIZE, 0)) < 0) {
 			die("recv failed");
 		}
-// printf("'0x%x 0x%x %d'\n", buff[numrecv - 2], buff[numrecv - 1], numrecv);
 	} while(buff[numrecv - 2] == '\r' && buff[numrecv - 1] == '\n');
 
 	buff[numrecv - 2] = '\0';
@@ -40,37 +38,34 @@ wait_for_cr_lf(int fd, char *buff) {
 static void
 send_file(int fd, char *path) {
 
-	FILE *inputfd = NULL;
+	int inputfd = -1;
 	size_t bytes_read = 0;
 	
 	char edited_path[MAX_PATH_SIZE+sizeof(INDEX_FILE)];
 
-//	printf("trying 1st time to open %s", path);
-	if ((inputfd = fopen(path, "r")) == NULL) {
+	printf("trying 1st time to open %s", path);
+	if ((inputfd = fileno(fopen(path, "r"))) < 0) {
 
 		sprintf(edited_path, "%s%s", path, INDEX_FILE);
-//		printf("path is %s\n", edited_path);
+		printf("path is %s\n", edited_path);
 		
-		if((inputfd = fopen(edited_path, "r")) == NULL) {
+		if((inputfd = fileno(fopen(edited_path, "r"))) < 0) {
 
-//			printf("Nothing worked using path /index.gph\n");
-
-			if((inputfd = fopen(INDEX_FILE, "r")) == NULL) { // Make index.gph somehow a const
-//				perror("3st attempt");
+			printf("Nothing worked using path /index.gph\n");
+			if((inputfd = fileno(fopen(INDEX_FILE, "r"))) < 0) { // Make index.gph somehow a const
+				perror("3st attempt");
 				die("Couldn't open requested path nor /index.gph.\n");
 			}
 		}
 	}
 
-//	printf("path is %s and the input FILE * is %p\n", path, inputfd);
+	printf("path is %s and the input fd is %d\n", path, inputfd);
 
-	while ((bytes_read = read(fileno(inputfd), path, MAX_PATH_SIZE)) > 0) {
+	while ((bytes_read = read(inputfd, path, MAX_PATH_SIZE)) > 0) {
         	write(fd, path, bytes_read);
-//		printf("cykl3\n");
-
     	}
 
-	close(fileno(inputfd));
+	close(inputfd);
 	return;
 }
 
@@ -116,7 +111,7 @@ main(int argc, char *argv[])
 
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	memset(&client_addr, 0, sizeof(client_addr));
-	memset(request, 0, MAX_PATH_SIZE);
+	memset(&request, 0, MAX_PATH_SIZE);
 
 	serv_addr.sin_family = AF_INET;
     	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); 
@@ -130,37 +125,42 @@ main(int argc, char *argv[])
 		die("Couldn't bind socket!\n"); 
 	}
 	
-	for (;;) {
-//		printf("cykl1\n");
-		if ((listen(sockfd, 5)) < 0) { 
-			die("Couldn't listen!\n"); 
-        	}
+	if ((listen(sockfd, 5)) < 0) { 
+		die("Couldn't listen!\n"); 
+        }
 	
-		len = sizeof(client_addr);
+	len = sizeof(client_addr);
 
-		if ((connfd = accept(sockfd, (struct sockaddr*)&client_addr, &len)) < 0) {
-//			perror("accept");
-			die("Couldn't create connection file descriptor!\n");
-		}
+	if ((connfd = accept(sockfd, (struct sockaddr*)&client_addr, &len)) < 0) {
+		perror("accept");
+		die("Couldn't create connection file descriptor!\n");
+	}
 
 	/*
 	 * Client: Connects
 	 * Server: Accepsts
-	 * Client: <cr><rf><nul> terminated string either nothing that means send /index.gph or "/path/to/smthin" that means hey send "/path/to/smthin" 
+	 * Client: <cr><lf> terminated string either nothing that means send /index.gph or "/path/to/smthin" that means hey send "/path/to/smthin" 
 	 * Server: Sends the file
 	 * Server: closes the connection
 	 *
 	 */
 
-//		printf("before wait\n");
-		wait_for_cr_lf(connfd, request);
-//		printf("before send\n");
+	// wait_for_cr_lf(connfd, request);
 
-		send_file(connfd, request);
-//		printf("before close\n");
-		
-		close(connfd);
+	int numrecv = 0;
+
+	for (;;) {
+		memset(request, 0, MAX_PATH_SIZE);
+		if((numrecv = recv(connfd, request, MAX_PATH_SIZE, 0)) < 0) {
+			die("recv failed");
+		}
+		for (int i = 0; request[i] != '\0'; i++)
+		printf("0x%x\n", request[i]);
 	}
+	// send_file(connfd, request);
+		
+	close(connfd);
+
 
 	return 0;
 }
