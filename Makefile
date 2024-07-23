@@ -16,4 +16,4 @@ config.h:
 	cp config.def.h $@
 
 clean:
-	rm -rf quark main.o $(COMPONENTS:=.o)
+	rm -rf sgph main.o $(COMPONENTS:=.o)

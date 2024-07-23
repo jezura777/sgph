@@ -30,7 +30,7 @@ wait_for_cr_lf(int fd, char *buff) {
 			die("recv failed");
 		}
 // printf("'0x%x 0x%x %d'\n", buff[numrecv - 2], buff[numrecv - 1], numrecv);
-	} while(buff[numrecv - 2] == '\r' && buff[numrecv - 1] == '\n');
+	} while(buff[numrecv - 1] == '\r' && buff[numrecv] == '\n');
 
 	buff[numrecv - 2] = '\0';
 
