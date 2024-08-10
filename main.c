@@ -42,13 +42,20 @@ send_file(int fd, char *path) {
 	int ifd = -1;
 	size_t bytes_read = 0;
 
-	
-	if(((chdir((strcmp(path, "") == 0)? ".":path) != -1) && (((ifd = open(INDEX_FILE, O_RDONLY)) != -1)))
-	     || (((ifd = open(path, O_RDONLY)) != -1) 
-	     || ((ifd = open(INDEX_FILE, O_RDONLY)) != -1))) {
+	/* Please help this monster has been bothering me, for quite a while now. I tried many ways of getting rid of it, but thay just made it worse/ */
+	if(chdir((strcmp(path, "") == 0)? ".":path) != -1) {
+		if((ifd = open(INDEX_FILE, O_RDONLY)) == -1) {
+			warn("There isn't index file in the directory %s opening /index.gph.\n", path);
+			goto error;
+		}
 		chdir("/");
+	} else if((ifd = open(path, O_RDONLY)) != -1) {
 	} else {
-		warn("Could't find file or index in directory path is %s!", path);
+error:
+		chdir("/");
+		if((ifd = open(INDEX_FILE, O_RDONLY)) == -1) {
+			die("Couldn't open requested path %s nor /index.gph.\n", path);
+		}
 	}
 
 	while ((bytes_read = read(ifd, path, MAX_PATH_SIZE)) > 0) {

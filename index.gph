@@ -1,5 +1,6 @@
 iThis is a comment yaaay	Err	127.0.0.1	70
 1phlog	/phlog/	127.0.0.1	70
+1hello	/hello/	127.0.0.1	70
 0main - is the file behind it all	/main.c	127.0.0.1	70
 0arg - suckless argument library	/arg.h	127.0.0.1	70
 0util - yet another suckless library	/util.h	127.0.0.1	70
