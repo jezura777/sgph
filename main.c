@@ -43,17 +43,14 @@ send_file(int fd, char *path) {
 	size_t bytes_read = 0;
 
 	
-	if(chdir((strcmp(path, ""))? ".":path) != -1) {
+	if(chdir((strcmp(path, "") == 0)? ".":path) != -1) {
 		if((ifd = open(INDEX_FILE, O_RDONLY)) == -1) {
-			die("Couldn't open requested path nor /index.gph.\n");
+			warn("There isn't index file in the directory %s opening /index.gph.\n", path);
 		}
 		chdir("/");
-	} else if((ifd = open(path, O_RDONLY)) == -1) {	
-		die("Couldn't open path = %s.\n", path);
-	} else {
-		if((ifd = open(INDEX_FILE, O_RDONLY)) == -1) {
-			die("Couldn't open requested path nor /index.gph.\n");
-		}
+	} else if((ifd = open(path, O_RDONLY)) != -1) {	
+	} else if((ifd = open(INDEX_FILE, O_RDONLY)) == -1) {
+		die("Couldn't open requested path %s nor /index.gph.\n", path);
 	}
 
 	while ((bytes_read = read(ifd, path, MAX_PATH_SIZE)) > 0) {
