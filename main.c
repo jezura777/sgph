@@ -1,3 +1,4 @@
+/* global includes */
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -7,17 +8,19 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+/* local includes */
 #include "util.h"
 #include "arg.h"
 
-/* function declarations */
+/* global variables */
+char *err_file = DEFAULT_ERROR_FILE;
 
+/* function declarations */
 static void wait_for_cr_lf(int fd, char *buff);
 static void send_file(int fd, char *path);
 static void usage(void);
 
 /* functions implementations */
-
 static void 
 wait_for_cr_lf(int fd, char *buff) {
 	int numrecv = 0;
@@ -42,7 +45,7 @@ send_file(int fd, char *path) {
 	/* Please help this monster has been bothering me, for quite a while now. I tried many ways of getting rid of it, but thay just made it worse/ */
 	if(chdir((strcmp(path, "") == 0)? ".":path) != -1) {
 		if((ifd = open(INDEX_FILE, O_RDONLY)) == -1) {
-			warn("There isn't index file in the directory %s opening %s.\n", path, ERROR_FILE);
+			warn("There isn't index file in the directory %s opening %s.\n", path, err_file);
 			goto error;
 		}
 		chdir("/");
@@ -50,8 +53,8 @@ send_file(int fd, char *path) {
 	} else {
 error:
 		chdir("/");
-		if((ifd = open(ERROR_FILE, O_RDONLY)) == -1) {
-			die("Couldn't open requested path %s nor %s\n", path, ERROR_FILE);
+		if((ifd = open(err_file, O_RDONLY)) == -1) {
+			die("Couldn't open requested path %s nor %s\n", path, err_file);
 		}
 	}
 
@@ -67,7 +70,7 @@ error:
 static void
 usage(void)
 {
-	die("usage: %s [-p port] [-d base dir for the server] [-v]\n", argv0);
+	die("usage: %s [-p port] [-e error file] [-d base dir for the server] [-v]\n", argv0);
 }
 
 int
@@ -80,8 +83,8 @@ main(int argc, char *argv[])
 	char request[MAX_PATH_SIZE];
 
         /* defaults */
-        int port = 70;
-        char *servedir = ".";
+        int port = DEFAULT_PORT;
+        char *servedir = DEFAULT_DIR;
 
 	ARGBEGIN {
 		case 'p':
@@ -93,6 +96,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			servedir = EARGF(usage());
+			break;
+		case 'e':
+			err_file = EARGF(usage());
 			break;
 		case 'v':
 			die("sgph %s © 2024-2029 Jezura777, see LICENSE for details.\n", VERSION);
