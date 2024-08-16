@@ -42,7 +42,7 @@ send_file(int fd, char *path) {
 	/* Please help this monster has been bothering me, for quite a while now. I tried many ways of getting rid of it, but thay just made it worse/ */
 	if(chdir((strcmp(path, "") == 0)? ".":path) != -1) {
 		if((ifd = open(INDEX_FILE, O_RDONLY)) == -1) {
-			warn("There isn't index file in the directory %s opening /index.gph.\n", path);
+			warn("There isn't index file in the directory %s opening %s.\n", path, ERROR_FILE);
 			goto error;
 		}
 		chdir("/");
@@ -50,8 +50,8 @@ send_file(int fd, char *path) {
 	} else {
 error:
 		chdir("/");
-		if((ifd = open(INDEX_FILE, O_RDONLY)) == -1) {
-			die("Couldn't open requested path %s nor /index.gph.\n", path);
+		if((ifd = open(ERROR_FILE, O_RDONLY)) == -1) {
+			die("Couldn't open requested path %s nor %s\n", path, ERROR_FILE);
 		}
 	}
 
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 	} ARGEND;
 	
 	chdir(servedir);
-	chroot(servedir);
+	chroot("./");
 
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	memset(&client_addr, 0, sizeof(client_addr));

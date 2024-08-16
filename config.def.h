@@ -5,5 +5,6 @@
 #define MAX_PATH_SIZE 4096
 
 #define INDEX_FILE "./index.gph"
+#define ERROR_FILE "/index.gph"
 
 #endif /* CONFIG_H */
