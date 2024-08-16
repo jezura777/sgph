@@ -1,17 +1,14 @@
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <limits.h>
-#include <pwd.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <fcntl.h>
 
 #include "util.h"
 #include "arg.h"
-
 
 /* function declarations */
 
@@ -70,7 +67,7 @@ error:
 static void
 usage(void)
 {
-	die("usage: %s [-p port] [-d dir] [-v]\n", argv0);
+	die("usage: %s [-p port] [-d base dir for the server] [-v]\n", argv0);
 }
 
 int
@@ -98,7 +95,7 @@ main(int argc, char *argv[])
 			servedir = EARGF(usage());
 			break;
 		case 'v':
-			die("sgph %s © 2024-2029 sgph engeneers, see LICENSE for details.\n", VERSION);
+			die("sgph %s © 2024-2029 Jezura777, see LICENSE for details.\n", VERSION);
 			break;
 		default:
 			usage();
