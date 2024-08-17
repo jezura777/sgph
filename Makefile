@@ -17,3 +17,11 @@ config.h:
 
 clean:
 	rm -rf sgph main.o $(COMPONENTS:=.o)
+
+install: all
+	mkdir -p ${DESTDIR}${PREFIX}/bin
+	cp -f sgph ${DESTDIR}${PREFIX}/bin
+	chmod 755 ${DESTDIR}${PREFIX}/bin/sgph
+
+uninstall:
+	rm -f ${DESTDIR}${PREFIX}/bin/sgph\
