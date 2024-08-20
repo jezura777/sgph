@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
